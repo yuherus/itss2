@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import TranslatePage from './pages/TranslatePage';
 import CoursesPage from './pages/CoursesPage';
 import MaterialsPage from './pages/MaterialsPage';
+import CourseDetail from './pages/CourseDetail';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="translate" element={<TranslatePage />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="materials" element={<MaterialsPage />} />
+          <Route path="course/:id" element={<CourseDetail />} />
         </Route>
       </Routes>
     </BrowserRouter>
