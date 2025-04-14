@@ -6,7 +6,7 @@ const PreviewModal = ({ isOpen, onClose, file }) => {
   if (!isOpen) return null;
 
   const corsProxyUrl = "https://proxy.corsfix.com/?";
-  const documents = file.url ? [{ uri: corsProxyUrl + encodeURIComponent(file.url), fileName: file.title }] : [];
+  const documents = file.url ? [{ uri: corsProxyUrl + file.url, fileName: file.title }] : [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

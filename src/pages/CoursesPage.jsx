@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
+
 const CourseCard = ({ course }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="overflow-hidden rounded-lg bg-white shadow-md transition-transform hover:scale-105">
+    <div onClick={() => {navigate(`/course/${course.id}`)}} className="overflow-hidden rounded-lg bg-white shadow-md transition-transform hover:scale-105">
       <img 
         src={course.image || "/api/placeholder/400/225"} 
         alt={course.title} 
@@ -36,7 +40,7 @@ const CourseCard = ({ course }) => {
 const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Dữ liệu khóa học mẫu
   const coursesData = [
     {
