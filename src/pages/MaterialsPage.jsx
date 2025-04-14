@@ -1,6 +1,64 @@
 import React, { useState } from 'react';
+import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
 
-const MaterialCard = ({ material }) => {
+// Component Modal để hiển thị preview
+const PreviewModal = ({ isOpen, onClose, file }) => {
+  if (!isOpen) return null;
+
+  const corsProxyUrl = "https://proxy.corsfix.com/?";
+  const documents = file.url ? [{ uri: corsProxyUrl + encodeURIComponent(file.url), fileName: file.title }] : [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="relative w-full max-w-4xl max-h-screen overflow-hidden bg-white rounded-lg shadow-xl p-1">
+        <div className="flex justify-between items-center p-2 border-b">
+          <h3 className="text-lg font-semibold">{file.title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="h-[70vh] overflow-auto">
+          {file.url ? (
+            <DocViewer
+              documents={documents}
+              pluginRenderers={DocViewerRenderers}
+              config={{
+                header: {
+                  disableHeader: true,
+                  disableFileName: true,
+                  retainURLParams: true
+                }
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">Không có URL file để xem trước</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="p-4 border-t flex justify-between">
+          <span className="text-sm text-gray-500">{file.type} · {file.size}</span>
+          <a 
+            href={file.url} 
+            download={file.title}
+            className="rounded-full bg-orange-500 px-4 py-1 text-sm text-white hover:bg-orange-600"
+          >
+            Tải xuống
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MaterialCard = ({ material, onPreview }) => {
   return (
     <div className="overflow-hidden rounded-lg bg-white shadow-md transition-transform hover:scale-105">
       <div className="p-5">
@@ -9,6 +67,7 @@ const MaterialCard = ({ material }) => {
             material.type === 'PDF' ? 'bg-red-100 text-red-600' :
             material.type === 'DOC' ? 'bg-blue-100 text-blue-600' :
             material.type === 'VIDEO' ? 'bg-green-100 text-green-600' :
+            material.type === 'PPT' ? 'bg-yellow-100 text-yellow-600' :
             'bg-gray-100 text-gray-600'
           }`}>
             {material.type}
@@ -27,9 +86,17 @@ const MaterialCard = ({ material }) => {
             {material.date}
           </div>
           
-          <button className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-500 hover:bg-orange-200">
-            Tải xuống
-          </button>
+          <div className="flex space-x-2">
+            <button 
+              onClick={() => onPreview(material)}
+              className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-500 hover:bg-blue-200"
+            >
+              Xem trước
+            </button>
+            <button className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-500 hover:bg-orange-200">
+              Tải xuống
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -39,8 +106,10 @@ const MaterialCard = ({ material }) => {
 const MaterialsPage = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [previewFile, setPreviewFile] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
-  // Dữ liệu tài liệu mẫu
+  // Dữ liệu tài liệu mẫu với thêm URLs
   const materialsData = [
     {
       id: 1,
@@ -49,7 +118,8 @@ const MaterialsPage = () => {
       type: "PDF",
       category: "writing",
       size: "2.4 MB",
-      date: "Updated 15/03/2025"
+      date: "Updated 15/03/2025",
+      url: "https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf"
     },
     {
       id: 2,
@@ -58,7 +128,8 @@ const MaterialsPage = () => {
       type: "DOC",
       category: "vocabulary",
       size: "1.8 MB",
-      date: "Updated 20/02/2025"
+      date: "Updated 20/02/2025",
+      url: "https://example-storage.com/files/academic-vocabulary.docx"
     },
     {
       id: 3,
@@ -67,7 +138,8 @@ const MaterialsPage = () => {
       type: "PDF",
       category: "listening",
       size: "3.1 MB",
-      date: "Updated 05/01/2025"
+      date: "Updated 05/01/2025",
+      url: "https://example-storage.com/files/lecture-strategies.pdf"
     },
     {
       id: 4,
@@ -76,7 +148,8 @@ const MaterialsPage = () => {
       type: "PPT",
       category: "speaking",
       size: "5.6 MB",
-      date: "Updated 10/12/2024"
+      date: "Updated 10/12/2024",
+      url: "https://example-storage.com/files/presentation-templates.pptx"
     },
     {
       id: 5,
@@ -85,7 +158,8 @@ const MaterialsPage = () => {
       type: "PDF",
       category: "research",
       size: "4.2 MB",
-      date: "Updated 25/11/2024"
+      date: "Updated 25/11/2024",
+      url: "https://example-storage.com/files/research-methodology.pdf"
     },
     {
       id: 6,
@@ -94,7 +168,8 @@ const MaterialsPage = () => {
       type: "PDF",
       category: "reading",
       size: "2.7 MB",
-      date: "Updated 18/10/2024"
+      date: "Updated 18/10/2024",
+      url: "https://example-storage.com/files/reading-techniques.pdf"
     },
     {
       id: 7,
@@ -103,7 +178,8 @@ const MaterialsPage = () => {
       type: "VIDEO",
       category: "speaking",
       size: "250 MB",
-      date: "Updated 30/09/2024"
+      date: "Updated 30/09/2024",
+      url: "https://example-storage.com/files/discussion-videos.mp4"
     },
     {
       id: 8,
@@ -112,7 +188,8 @@ const MaterialsPage = () => {
       type: "PDF",
       category: "writing",
       size: "3.5 MB",
-      date: "Updated 15/08/2024"
+      date: "Updated 15/08/2024",
+      url: "https://example-storage.com/files/citation-guide.pdf"
     }
   ];
   
@@ -123,6 +200,24 @@ const MaterialsPage = () => {
                         material.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesQuery;
   });
+
+  // Xử lý mở preview
+  const handlePreview = (material) => {
+    setPreviewFile(material);
+    setIsPreviewOpen(true);
+  };
+
+  // Xử lý đóng preview
+  const handleClosePreview = () => {
+    setIsPreviewOpen(false);
+  };
+
+  // Xử lý tải file lên
+  const handleFileUpload = (event) => {
+    // Xử lý việc tải file lên
+    console.log('File được chọn:', event.target.files);
+    // Implementation để tải lên dịch vụ lưu trữ sẽ được thêm ở đây
+  };
 
   return (
     <div className="space-y-8">
@@ -234,7 +329,11 @@ const MaterialsPage = () => {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredMaterials.length > 0 ? (
             filteredMaterials.map(material => (
-              <MaterialCard key={material.id} material={material} />
+              <MaterialCard 
+                key={material.id} 
+                material={material} 
+                onPreview={handlePreview}
+              />
             ))
           ) : (
             <div className="col-span-full text-center py-8">
@@ -252,13 +351,30 @@ const MaterialsPage = () => {
         </p>
         
         <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
+          <input
+            type="file"
+            id="file-upload"
+            className="hidden"
+            onChange={handleFileUpload}
+            multiple
+          />
           <p className="mb-4 text-gray-500">Kéo và thả hoặc nhấp để chọn tệp</p>
-          <button className="rounded-full bg-orange-500 px-6 py-2 text-white hover:bg-orange-600">
+          <label 
+            htmlFor="file-upload" 
+            className="cursor-pointer rounded-full bg-orange-500 px-6 py-2 text-white hover:bg-orange-600"
+          >
             Tải lên tài liệu
-          </button>
+          </label>
         </div>
         <p className="mt-4 text-xs text-gray-500">Hỗ trợ định dạng: PDF, DOC, PPT, VIDEO</p>
       </div>
+      
+      {/* Preview Modal */}
+      <PreviewModal
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+        file={previewFile}
+      />
     </div>
   );
 }
