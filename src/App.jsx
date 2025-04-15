@@ -5,6 +5,7 @@ import TranslatePage from './pages/TranslatePage';
 import CoursesPage from './pages/CoursesPage';
 import MaterialsPage from './pages/MaterialsPage';
 import CourseDetail from './pages/CourseDetail';
+import MaterialDetail from './pages/MaterialDetail';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="courses" element={<CoursesPage />} />
           <Route path="materials" element={<MaterialsPage />} />
           <Route path="course/:id" element={<CourseDetail />} />
+          <Route path="material/:materialId" element={<MaterialDetail />} />
         </Route>
       </Routes>
     </BrowserRouter>
