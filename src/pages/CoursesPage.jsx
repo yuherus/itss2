@@ -9,7 +9,7 @@ const CourseCard = ({ course }) => {
   return (
     <div onClick={() => {navigate(`/course/${course.id}`)}} className="overflow-hidden rounded-lg bg-white shadow-md transition-transform hover:scale-105">
       <img 
-        src={course.image || "/api/placeholder/400/225"} 
+        src={course.image} 
         alt={course.title} 
         className="h-48 w-full object-cover"
       />
@@ -47,84 +47,84 @@ const CoursesPage = () => {
       id: 1,
       title: "Academic Writing for Research Papers",
       description: "Learn how to write research papers with proper academic style and formatting.",
-      image: "/api/placeholder/400/225",
+      image: "/images/img1.jpg",
       level: "Intermediate",
       duration: "8 weeks",
       price: "1,800,000 VND",
       category: "writing",
       instructor: {
         name: "Dr. Sarah Johnson",
-        avatar: "/api/placeholder/40/40"
+        avatar: "/images/drimg1.jpg"
       }
     },
     {
       id: 2,
       title: "English for Scientific Communication",
       description: "Improve your ability to communicate scientific concepts in English.",
-      image: "/api/placeholder/400/225",
+      image: "/images/img2.jpg",
       level: "Advanced",
       duration: "10 weeks",
       price: "2,500,000 VND",
       category: "speaking",
       instructor: {
         name: "Prof. Robert Chen",
-        avatar: "/api/placeholder/40/40"
+        avatar: "/images/drimg2.jpg"
       }
     },
     {
       id: 3,
       title: "Academic Vocabulary Enhancement",
       description: "Expand your academic vocabulary with this intensive course.",
-      image: "/api/placeholder/400/225",
+      image: "/images/img3.png",
       level: "Beginner",
       duration: "6 weeks",
       price: "1,200,000 VND",
       category: "vocabulary",
       instructor: {
         name: "Emma Williams",
-        avatar: "/api/placeholder/40/40"
+        avatar: "/images/drimg3.jpg"
       }
     },
     {
       id: 4,
       title: "Critical Reading of Academic Texts",
       description: "Develop strategies for efficiently reading and analyzing academic literature.",
-      image: "/api/placeholder/400/225",
+      image: "/images/img4.png",
       level: "Intermediate",
       duration: "7 weeks",
       price: "1,500,000 VND",
       category: "reading",
       instructor: {
         name: "Dr. Michael Lee",
-        avatar: "/api/placeholder/40/40"
+        avatar: "/images/drimg4.jpg"
       }
     },
     {
       id: 5,
       title: "Academic Presentation Skills",
       description: "Master the art of presenting academic research in English.",
-      image: "/api/placeholder/400/225",
+      image: "/images/img5.jpg",
       level: "Advanced",
       duration: "5 weeks",
       price: "1,700,000 VND",
       category: "speaking",
       instructor: {
         name: "Prof. Lisa Garcia",
-        avatar: "/api/placeholder/40/40"
+        avatar: "/images/drimg5.jpg"
       }
     },
     {
       id: 6,
       title: "Grammar for Academic Writing",
       description: "Focus on advanced grammar structures commonly used in academic writing.",
-      image: "/api/placeholder/400/225",
+      image: "/images/img6.png",
       level: "Intermediate",
       duration: "8 weeks",
       price: "1,600,000 VND",
       category: "writing",
       instructor: {
         name: "David Thompson",
-        avatar: "/api/placeholder/40/40"
+        avatar: "/images/drimg6.jpg"
       }
     }
   ];
@@ -284,7 +284,7 @@ const CoursesPage = () => {
           </div>
           <div className="md:w-1/2">
             <img 
-              src="/api/placeholder/600/350" 
+              src="/images/img7.jpg" 
               alt="IELTS Academic Writing Course" 
               className="h-full w-full rounded-lg object-cover"
             />
