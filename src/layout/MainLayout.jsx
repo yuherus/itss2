@@ -1,5 +1,7 @@
-import { Outlet, NavLink } from 'react-router-dom';
-import { useState } from 'react';
+import { Outlet, NavLink, Link } from 'react-router-dom';
+import { useState, useContext } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient';
 
 const HomeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -40,6 +42,8 @@ const SettingsIcon = () => (
 
 const MainLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -94,27 +98,76 @@ const MainLayout = () => {
         {/* Header */}
         <header className="bg-white shadow">
           <div className="flex h-16 items-center justify-between px-4">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-600 focus:outline-none lg:hidden"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-              </svg>
-            </button>
+            <div>
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-600 focus:outline-none lg:hidden"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+              </button>
+            </div>
 
             <div className="flex items-center">
               <div className="relative">
-                <button className="flex items-center rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600">
-                  Đăng nhập
-                </button>
+                {user ? (
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className="flex items-center space-x-2 rounded-full bg-gray-100 p-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none"
+                    >
+                      <span className="hidden md:block">{user.email}</span>
+                      <div className="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center text-white">
+                        {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                    </button>
+                    
+                    {/* Dropdown menu */}
+                    {isUserMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                        <Link 
+                          to="/profile" 
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Hồ sơ
+                        </Link>
+                        <Link 
+                          to="/settings" 
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Cài đặt
+                        </Link>
+                        <button 
+                          onClick={() => {
+                            supabase.auth.signOut();
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Đăng xuất
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex space-x-2">
+                    <Link to="/login">
+                      <button className="flex items-center rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600">
+                        Đăng nhập
+                      </button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </header>
 
         {/* Content area */}
-        <main className="flex-1 overflow-auto p-4">
+        <main className="flex-1 overflow-auto p-4 z-0">
           <Outlet />
         </main>
 
