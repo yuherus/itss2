@@ -1,5 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+
+// Cấu hình API Lingva
+const LINGVA_API_URL = 'https://lingva.ml/api/v1';
+
+// Cấu hình Supabase Storage URL
+const SUPABASE_STORAGE_URL = 'https://your-project.supabase.co/storage/v1/object/public';
+
+// Danh sách ngôn ngữ mặc định
+const DEFAULT_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'vi', name: 'Vietnamese' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'zh', name: 'Chinese' }
+];
 
 const FeatureCard = ({ icon, title, description }) => {
   return (
@@ -13,7 +29,167 @@ const FeatureCard = ({ icon, title, description }) => {
   );
 };
 
+const CourseCard = ({ course }) => {
+  // Tạo URL đầy đủ cho ảnh từ Supabase
+  const imageUrl = course.image;
+  
+  return (
+    <div className="rounded-lg bg-white shadow-md overflow-hidden">
+      <img 
+        src={imageUrl}
+        alt={course.title}
+        className="w-full h-48 object-cover"
+      />
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-orange-500">{course.level}</span>
+          <span className="text-sm text-gray-500">{course.duration_type}</span>
+        </div>
+        <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{course.description}</p>
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-bold text-orange-500">${course.price}</span>
+          <div className="flex items-center">
+            <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            <span className="ml-1 text-sm text-gray-600">{course.rating}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const HomePage = () => {
+  const [sourceText, setSourceText] = useState('');
+  const [translatedText, setTranslatedText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [sourceLang, setSourceLang] = useState('en');
+  const [targetLang, setTargetLang] = useState('vi');
+  const [error, setError] = useState('');
+  const [languages, setLanguages] = useState(DEFAULT_LANGUAGES);
+  const [detectedLanguage, setDetectedLanguage] = useState(null);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [featuredCourses, setFeaturedCourses] = useState([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+
+  useEffect(() => {
+    fetchLanguages();
+    fetchFeaturedCourses();
+  }, []);
+
+  const fetchLanguages = async () => {
+    try {
+      const response = await fetch(`${LINGVA_API_URL}/languages`);
+      if (!response.ok) throw new Error('Failed to fetch languages');
+      const data = await response.json();
+      setLanguages(data.languages || DEFAULT_LANGUAGES);
+    } catch (error) {
+      console.error('Error fetching languages:', error);
+      setError('Không thể tải danh sách ngôn ngữ. Đang sử dụng danh sách mặc định.');
+    }
+  };
+
+  const fetchFeaturedCourses = async () => {
+    try {
+      setIsLoadingCourses(true);
+      const { data: courses, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('rating', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+
+      setFeaturedCourses(courses || []);
+    } catch (error) {
+      console.error('Error fetching featured courses:', error);
+      setError('Không thể tải danh sách khóa học. Vui lòng thử lại sau.');
+    } finally {
+      setIsLoadingCourses(false);
+    }
+  };
+
+  const detectLanguage = async (text) => {
+    if (!text.trim()) return;
+    setIsDetecting(true);
+
+    try {
+      const response = await fetch(`${LINGVA_API_URL}/detect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text
+        })
+      });
+
+      if (!response.ok) throw new Error('Language detection failed');
+      
+      const data = await response.json();
+      if (data && data.lang) {
+        setDetectedLanguage(data);
+        setSourceLang(data.lang);
+        return data.lang;
+      }
+    } catch (error) {
+      console.error('Error detecting language:', error);
+      setError('Không thể phát hiện ngôn ngữ');
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
+  const handleTranslate = async () => {
+    if (!sourceText.trim()) return;
+    
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${LINGVA_API_URL}/${sourceLang}/${targetLang}/${encodeURIComponent(sourceText)}`);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Translation failed');
+      }
+
+      const data = await response.json();
+      
+      if (data && data.translation) {
+        setTranslatedText(data.translation);
+      } else {
+        throw new Error('Không nhận được kết quả dịch');
+      }
+    } catch (error) {
+      console.error('Lỗi khi dịch:', error);
+      setError('Có lỗi xảy ra khi dịch. Vui lòng thử lại sau.');
+      setTranslatedText('');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSwapLanguages = () => {
+    const temp = sourceLang;
+    setSourceLang(targetLang);
+    setTargetLang(temp);
+    
+    setSourceText(translatedText);
+    setTranslatedText('');
+    setError('');
+    setDetectedLanguage(null);
+  };
+
+  const handleTextChange = async (text) => {
+    setSourceText(text);
+    if (text.length > 50) {
+      await detectLanguage(text);
+    }
+  };
+
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -30,12 +206,133 @@ const HomePage = () => {
           </div>
           <div className="w-full md:w-1/2">
             <img 
-              src="/api/placeholder/600/400" 
+              src="/images/hero.jpg" 
               alt="Student studying" 
               className="h-full w-full object-cover"
             />
           </div>
         </div>
+      </section>
+
+      {/* Translation Section */}
+      <section className="rounded-lg bg-white p-6 shadow-md">
+        <h2 className="mb-6 text-2xl font-bold">Dịch văn bản</h2>
+        
+        <div className="mb-4 flex items-center justify-between">
+          <div className="w-2/5">
+            <select 
+              value={sourceLang}
+              onChange={(e) => setSourceLang(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-2 focus:border-orange-500 focus:outline-none"
+            >
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+            {detectedLanguage && (
+              <p className="mt-1 text-sm text-gray-600">
+                Đã phát hiện: {languages.find(l => l.code === detectedLanguage.lang)?.name}
+                {detectedLanguage.confidence && ` (${Math.round(detectedLanguage.confidence * 100)}% độ tin cậy)`}
+              </p>
+            )}
+          </div>
+          
+          <button 
+            onClick={handleSwapLanguages}
+            className="rounded-full bg-gray-100 p-2 hover:bg-gray-200"
+            title="Hoán đổi ngôn ngữ"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          </button>
+          
+          <div className="w-2/5">
+            <select 
+              value={targetLang}
+              onChange={(e) => setTargetLang(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 p-2 focus:border-orange-500 focus:outline-none"
+            >
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div>
+            <textarea
+              value={sourceText}
+              onChange={(e) => handleTextChange(e.target.value)}
+              placeholder="Nhập văn bản cần dịch..."
+              className="h-64 w-full rounded-lg border border-gray-300 p-4 focus:border-orange-500 focus:outline-none"
+            ></textarea>
+            <div className="mt-2 flex justify-between text-sm text-gray-600">
+              <span>{sourceText.length} ký tự</span>
+              {isDetecting && <span>Đang phát hiện ngôn ngữ...</span>}
+            </div>
+          </div>
+          
+          <div>
+            <textarea
+              value={translatedText}
+              readOnly
+              placeholder="Bản dịch sẽ hiển thị ở đây..."
+              className="h-64 w-full rounded-lg border border-gray-300 p-4 bg-gray-50"
+            ></textarea>
+            {error && <p className="mt-2 text-red-500 text-sm">{error}</p>}
+          </div>
+        </div>
+        
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={handleTranslate}
+            disabled={isLoading || !sourceText.trim()}
+            className={`rounded-full px-6 py-2 font-medium text-white ${isLoading || !sourceText.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}
+          >
+            {isLoading ? 'Đang dịch...' : 'Dịch ngay'}
+          </button>
+        </div>
+      </section>
+
+      {/* Featured Courses Section */}
+      <section className="rounded-lg bg-white p-6 shadow-md">
+        <div className="mb-8">
+          <h2 className="mb-4 text-2xl font-bold">Khóa học nổi bật</h2>
+          <p className="text-gray-600">
+            Khám phá các khóa học tiếng Anh học thuật chất lượng cao được thiết kế bởi các chuyên gia hàng đầu.
+          </p>
+        </div>
+
+        {isLoadingCourses ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-8">{error}</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {featuredCourses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+
+            <div className="mt-8 text-center">
+              <Link 
+                to="/courses" 
+                className="inline-block rounded-full border border-orange-500 px-6 py-2 font-medium text-orange-500 transition hover:bg-orange-500 hover:text-white"
+              >
+                Xem tất cả khóa học
+              </Link>
+            </div>
+          </>
+        )}
       </section>
 
       {/* About Section */}
@@ -92,4 +389,5 @@ const HomePage = () => {
     </div>
   );
 }
+
 export default HomePage;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 // Cấu hình API Lingva
 const LINGVA_API_URL = 'https://lingva.ml/api/v1';
@@ -72,6 +73,7 @@ const BASE_DICTIONARY_DATA = {
 };
 
 const TranslatePage = () => {
+  const location = useLocation();
   const [sourceText, setSourceText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -85,6 +87,23 @@ const TranslatePage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [dictionaryData, setDictionaryData] = useState(BASE_DICTIONARY_DATA);
+
+  // Reset search states when component mounts
+  useEffect(() => {
+    setSearchTerm('');
+    setSearchResults([]);
+    setError('');
+  }, []);
+
+  // Thêm useEffect để xử lý query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const query = params.get('q');
+    if (query) {
+      setSourceText(query);
+      handleTextChange(query);
+    }
+  }, [location.search]);
 
   // Fetch available languages when component mounts
   useEffect(() => {
