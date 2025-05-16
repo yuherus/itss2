@@ -1,7 +1,11 @@
-import { Outlet, NavLink, Link } from 'react-router-dom';
-import { useState, useContext } from 'react';
+import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useContext, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
+import React from 'react';
+
+// Cấu hình API Lingva
+const LINGVA_API_URL = 'https://lingva.ml/api/v1';
 
 const HomeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,6 +48,73 @@ const MainLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Thêm state cho tính năng tìm kiếm nhanh
+  const [searchTerm, setSearchTerm] = useState('');
+  const [translation, setTranslation] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showTranslation, setShowTranslation] = useState(false);
+  const debounceTimer = useRef(null);
+
+  // Reset searchTerm and related states when navigating to /translate
+  React.useEffect(() => {
+    if (location.pathname.startsWith('/translate')) {
+      setSearchTerm('');
+      setShowTranslation(false);
+      setTranslation('');
+      setError('');
+    }
+  }, [location.pathname]);
+
+  const handleSearch = async (e) => {
+    const text = e.target.value;
+    setSearchTerm(text);
+    
+    if (text.trim().length > 0) {
+      // Clear any existing timer
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+
+      // Set new timer
+      debounceTimer.current = setTimeout(async () => {
+        setIsLoading(true);
+        setError('');
+        
+        try {
+          const response = await fetch(`${LINGVA_API_URL}/en/vi/${encodeURIComponent(text)}`);
+          
+          if (!response.ok) {
+            throw new Error('Translation failed');
+          }
+          
+          const data = await response.json();
+          if (data && data.translation) {
+            setTranslation(data.translation);
+            setShowTranslation(true);
+          }
+        } catch (error) {
+          console.error('Translation error:', error);
+          setError('Không thể dịch từ này');
+          setShowTranslation(false);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 3000); // 3 seconds delay
+    } else {
+      setShowTranslation(false);
+      setTranslation('');
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      navigate(`/translate?q=${encodeURIComponent(searchTerm)}`);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -98,7 +169,7 @@ const MainLayout = () => {
         {/* Header */}
         <header className="bg-white shadow">
           <div className="flex h-16 items-center justify-between px-4">
-            <div>
+            <div className="flex items-center">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="text-gray-600 focus:outline-none lg:hidden"
@@ -107,6 +178,44 @@ const MainLayout = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
                 </svg>
               </button>
+            </div>
+
+            {/* Thêm thanh tìm kiếm nhanh */}
+            <div className="relative flex-1 max-w-xl mx-4">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearch}
+                onKeyPress={handleKeyPress}
+                placeholder="Nhập từ cần dịch nhanh..."
+                className="w-full rounded-full border border-gray-300 px-4 py-2 focus:border-orange-500 focus:outline-none"
+              />
+              {showTranslation && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg p-3 z-50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{searchTerm}</p>
+                      <p className="text-gray-600">{translation}</p>
+                    </div>
+                    <Link 
+                      to={`/translate?q=${encodeURIComponent(searchTerm)}`}
+                      className="text-orange-500 hover:text-orange-600 text-sm"
+                    >
+                      Xem chi tiết
+                    </Link>
+                  </div>
+                </div>
+              )}
+              {isLoading && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg p-3">
+                  <p className="text-gray-600">Đang dịch...</p>
+                </div>
+              )}
+              {error && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg p-3">
+                  <p className="text-red-500">{error}</p>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center">
