@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-
+import { supabase } from '../supabaseClient';
+import Spinner from '../components/spinner/Spinner';
 
 const CourseCard = ({ course }) => {
   const navigate = useNavigate();
@@ -24,11 +25,11 @@ const CourseCard = ({ course }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <img 
-              src={course.instructor.avatar || "/api/placeholder/40/40"} 
-              alt={course.instructor.name} 
+              src={course.instructors?.avatar || "/api/placeholder/40/40"} 
+              alt={course.instructors?.name} 
               className="h-8 w-8 rounded-full"
             />
-            <span className="ml-2 text-xs text-gray-600">{course.instructor.name}</span>
+            <span className="ml-2 text-xs text-gray-600">{course.instructors?.name}</span>
           </div>
           <span className="font-medium text-orange-500">{course.price}</span>
         </div>
@@ -40,94 +41,29 @@ const CourseCard = ({ course }) => {
 const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [coursesData, setCoursesData] = useState([])
+  const [loading, setLoading] = useState(false)
 
-  // Dữ liệu khóa học mẫu
-  const coursesData = [
-    {
-      id: 1,
-      title: "Academic Writing for Research Papers",
-      description: "Learn how to write research papers with proper academic style and formatting.",
-      image: "/images/img1.jpg",
-      level: "Intermediate",
-      duration: "8 weeks",
-      price: "1,800,000 VND",
-      category: "writing",
-      instructor: {
-        name: "Dr. Sarah Johnson",
-        avatar: "/images/drimg1.jpg"
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoading(true)
+      let { data, error } = await supabase
+        .from('courses')
+        .select(`*,
+          instructors (*)
+        `)
+
+      if (error) {
+        console.error('Lỗi khi lấy dữ liệu:', error)
+      } else {
+        setCoursesData(data)
+        console.log(data)
       }
-    },
-    {
-      id: 2,
-      title: "English for Scientific Communication",
-      description: "Improve your ability to communicate scientific concepts in English.",
-      image: "/images/img2.jpg",
-      level: "Advanced",
-      duration: "10 weeks",
-      price: "2,500,000 VND",
-      category: "speaking",
-      instructor: {
-        name: "Prof. Robert Chen",
-        avatar: "/images/drimg2.jpg"
-      }
-    },
-    {
-      id: 3,
-      title: "Academic Vocabulary Enhancement",
-      description: "Expand your academic vocabulary with this intensive course.",
-      image: "/images/img3.png",
-      level: "Beginner",
-      duration: "6 weeks",
-      price: "1,200,000 VND",
-      category: "vocabulary",
-      instructor: {
-        name: "Emma Williams",
-        avatar: "/images/drimg3.jpg"
-      }
-    },
-    {
-      id: 4,
-      title: "Critical Reading of Academic Texts",
-      description: "Develop strategies for efficiently reading and analyzing academic literature.",
-      image: "/images/img4.png",
-      level: "Intermediate",
-      duration: "7 weeks",
-      price: "1,500,000 VND",
-      category: "reading",
-      instructor: {
-        name: "Dr. Michael Lee",
-        avatar: "/images/drimg4.jpg"
-      }
-    },
-    {
-      id: 5,
-      title: "Academic Presentation Skills",
-      description: "Master the art of presenting academic research in English.",
-      image: "/images/img5.jpg",
-      level: "Advanced",
-      duration: "5 weeks",
-      price: "1,700,000 VND",
-      category: "speaking",
-      instructor: {
-        name: "Prof. Lisa Garcia",
-        avatar: "/images/drimg5.jpg"
-      }
-    },
-    {
-      id: 6,
-      title: "Grammar for Academic Writing",
-      description: "Focus on advanced grammar structures commonly used in academic writing.",
-      image: "/images/img6.png",
-      level: "Intermediate",
-      duration: "8 weeks",
-      price: "1,600,000 VND",
-      category: "writing",
-      instructor: {
-        name: "David Thompson",
-        avatar: "/images/drimg6.jpg"
-      }
+      setLoading(false)
     }
-  ];
+
+    fetchCourses()
+  }, [])
   
   // Lọc và tìm kiếm khóa học
   const filteredCourses = coursesData.filter(course => {
@@ -236,17 +172,19 @@ const CoursesPage = () => {
         </div>
         
         {/* Danh sách khóa học */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredCourses.length > 0 ? (
-            filteredCourses.map(course => (
-              <CourseCard key={course.id} course={course} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-8">
-              <p className="text-gray-500">Không tìm thấy khóa học phù hợp.</p>
-            </div>
-          )}
-        </div>
+        {loading ? <Spinner/> :
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredCourses.length > 0 ? (
+              filteredCourses.map(course => (
+                <CourseCard key={course.id} course={course} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-500">Không tìm thấy khóa học phù hợp.</p>
+              </div>
+            )}
+          </div>
+        }
       </div>
       
       {/* Featured Course */}
