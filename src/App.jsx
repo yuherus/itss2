@@ -8,6 +8,7 @@ import MaterialsPage from './pages/MaterialsPage';
 import CourseDetail from './pages/CourseDetail';
 import MaterialDetail from './pages/MaterialDetail';
 import LoginPage from './pages/LoginPage';
+import DictionaryPage from './pages/DictionaryPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="materials" element={<MaterialsPage />} />
             <Route path="course/:id" element={<CourseDetail />} />
             <Route path="material/:materialId" element={<MaterialDetail />} />
+            <Route path="dictionary" element={<DictionaryPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
