@@ -9,6 +9,7 @@ import CourseDetail from './pages/CourseDetail';
 import MaterialDetail from './pages/MaterialDetail';
 import LoginPage from './pages/LoginPage';
 import LessonDetail from './components/LessonDetail';
+import DictionaryPage from './pages/DictionaryPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="translate" element={<TranslatePage />} />
+            <Route path="dictionary" element={<DictionaryPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="materials" element={<MaterialsPage />} />
             <Route path="course/:id" element={<CourseDetail />} />
