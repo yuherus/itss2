@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 // Component Modal để hiển thị preview
 const PreviewModal = ({ isOpen, onClose, file }) => {
@@ -141,6 +142,17 @@ const MaterialsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [previewFile, setPreviewFile] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [fileMetadata, setFileMetadata] = useState({
+    name: '',
+    category: 'writing',
+    description: '',
+    pages: 0
+  });
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
 
   // Dữ liệu tài liệu mẫu với thêm URLs
   const materialsData = [
@@ -244,22 +256,155 @@ const MaterialsPage = () => {
     return matchesCategory && matchesQuery;
   });
 
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+      }
+    };
+    
+    getCurrentUser();
+  }, []);
+
   // Xử lý mở preview
   const handlePreview = (material) => {
     setPreviewFile(material);
     setIsPreviewOpen(true);
   };
 
-  // Xử lý đóng preview
   const handleClosePreview = () => {
     setIsPreviewOpen(false);
   };
 
   // Xử lý tải file lên
-  const handleFileUpload = (event) => {
-    // Xử lý việc tải file lên
-    console.log('File được chọn:', event.target.files);
-    // Implementation để tải lên dịch vụ lưu trữ sẽ được thêm ở đây
+   const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    setSelectedFiles(files);
+    
+    if (files.length > 0) {
+      // Lấy tên file đầu tiên làm gợi ý cho tên tài liệu
+      const fileName = files[0].name.split('.')[0];
+      setFileMetadata({
+        ...fileMetadata,
+        name: fileName
+      });
+      setIsUploadModalOpen(true);
+    }
+  };
+
+  // Xử lý khi thay đổi metadata
+  const handleMetadataChange = (e) => {
+    const { name, value } = e.target;
+    setFileMetadata({
+      ...fileMetadata,
+      [name]: value
+    });
+  };
+
+  // Xử lý khi submit form upload
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!user) {
+      setUploadError('Vui lòng đăng nhập để tải lên tài liệu');
+      return;
+    }
+    
+    if (selectedFiles.length === 0) {
+      setUploadError('Vui lòng chọn ít nhất một tệp để tải lên');
+      return;
+    }
+    
+    setIsUploading(true);
+    setUploadError(null);
+    
+    try {
+      const file = selectedFiles[0]; // Xử lý file đầu tiên
+      
+      // Xác định loại tệp
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      let fileType;
+      
+      if (['pdf'].includes(fileExt)) {
+        fileType = 'PDF';
+      } else if (['doc', 'docx'].includes(fileExt)) {
+        fileType = 'DOC';
+      } else if (['ppt', 'pptx'].includes(fileExt)) {
+        fileType = 'PPT';
+      } else if (['mp4', 'avi', 'mov', 'wmv'].includes(fileExt)) {
+        fileType = 'VIDEO';
+      } else {
+        fileType = 'OTHER';
+      }
+      
+      // Tạo đường dẫn và tên file duy nhất
+      const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      
+      // Upload file lên supabase bucket
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('file')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      // Lấy URL công khai của file
+      const { data: { publicUrl } } = supabase.storage
+        .from('file')
+        .getPublicUrl(filePath);
+      
+      // Tạo bản ghi mới trong bảng files
+      const { error: insertError } = await supabase
+        .from('files')
+        .insert({
+          user_id: user.id,
+          name: fileMetadata.name || file.name.split('.')[0],
+          category: fileMetadata.category,
+          file_path: publicUrl,
+          description: fileMetadata.description,
+          size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+          pages: parseInt(fileMetadata.pages) || 0,
+          type: fileType,
+          views: 0,
+          downloads: 0,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      
+      if (insertError) {
+        throw insertError;
+      }
+      
+      // Reset form và đóng modal
+      setSelectedFiles([]);
+      setIsUploadModalOpen(false);
+      setFileMetadata({
+        name: '',
+        category: 'writing',
+        description: '',
+        pages: 0
+      });
+      
+      // Hiển thị thông báo thành công (có thể thêm một toast notification ở đây)
+      alert('Tải lên tài liệu thành công!');
+      
+    } catch (error) {
+      console.error('Lỗi khi tải lên:', error);
+      setUploadError(`Lỗi khi tải lên: ${error.message}`);
+    } finally { 
+      setIsUploading(false);
+    }
+  };
+
+  const handleCloseUploadModal = () => {
+    setIsUploadModalOpen(false);
+    setSelectedFiles([]);
+    setUploadError(null);
   };
 
   return (
@@ -421,6 +566,107 @@ const MaterialsPage = () => {
         onClose={handleClosePreview}
         file={previewFile}
       />
+
+      {/* File Upload Modal */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="relative w-full max-w-lg max-h-screen overflow-y-auto bg-white rounded-lg shadow-xl p-6">
+            <h3 className="text-lg font-semibold mb-4">Thông tin tài liệu</h3>
+            
+            {uploadError && (
+              <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg">
+                {uploadError}
+              </div>
+            )}
+            
+            <form onSubmit={handleUploadSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tên tài liệu
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={fileMetadata.name}
+                  onChange={handleMetadataChange}
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Danh mục
+                </label>
+                <select
+                  name="category"
+                  value={fileMetadata.category}
+                  onChange={handleMetadataChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="writing">Writing</option>
+                  <option value="vocabulary">Vocabulary</option>
+                  <option value="reading">Reading</option>
+                  <option value="speaking">Speaking</option>
+                  <option value="listening">Listening</option>
+                  <option value="research">Research</option>
+                </select>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mô tả
+                </label>
+                <textarea
+                  name="description"
+                  value={fileMetadata.description}
+                  onChange={handleMetadataChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  rows="3"
+                ></textarea>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Số trang (để trống nếu là video)
+                </label>
+                <input
+                  type="number"
+                  name="pages"
+                  value={fileMetadata.pages}
+                  onChange={handleMetadataChange}
+                  min="0"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <p className="text-sm text-gray-500">
+                  File được chọn: <strong>{selectedFiles.length > 0 ? selectedFiles[0].name : 'Không có file nào'}</strong>
+                </p>
+              </div>
+              
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={handleCloseUploadModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  disabled={isUploading}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:bg-orange-300"
+                  disabled={isUploading}
+                >
+                  {isUploading ? 'Đang tải lên...' : 'Tải lên'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
