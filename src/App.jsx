@@ -10,6 +10,7 @@ import MaterialDetail from './pages/MaterialDetail';
 import LoginPage from './pages/LoginPage';
 import LessonDetail from './components/LessonDetail';
 import DictionaryPage from './pages/DictionaryPage';
+import SentenceImprovementPage from './pages/SentenceImprovementPage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="dictionary" element={<DictionaryPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="materials" element={<MaterialsPage />} />
+            <Route path="sentence-improvement" element={<SentenceImprovementPage />} />
             <Route path="course/:id" element={<CourseDetail />} />
             <Route path="material/:materialId" element={<MaterialDetail />} />
           </Route>
