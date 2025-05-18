@@ -5,9 +5,11 @@ import { supabase } from '../supabaseClient';
 const CourseDetail = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
-  const [courseData, setCourseData] = useState([])
+  const [courseData, setCourseData] = useState(null);
   const [expandedTopics, setExpandedTopics] = useState({});
-  const navigate = useNavigate()
+  const [showQr, setShowQr] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -24,18 +26,18 @@ const CourseDetail = () => {
           course_objectives (*),
           course_requirements (*)
         `)
-        .eq("id", id)
+        .eq("id", id);
 
       if (error) {
-        console.error('Lỗi khi lấy dữ liệu:', error)
+        console.error('Lỗi khi lấy dữ liệu:', error);
       } else {
-        setCourseData(data[0])
-        console.log(data[0])
+        setCourseData(data[0]);
+        console.log(data[0]);
       }
-    }
+    };
 
-    fetchCourses()
-  }, [])
+    fetchCourses();
+  }, [id]);
 
   // Sample data for similar courses (unchanged)
   const similarCourses = [
@@ -75,9 +77,58 @@ const CourseDetail = () => {
     }));
   };
 
-  const handleSelectTopic = useCallback((lessionId) => {
-    navigate(`/lession/${lessionId}`)
-  }, [navigate])
+  const handleSelectTopic = useCallback((lessonId) => {
+    navigate(`/lession/${lessonId}`);
+  }, [navigate]);
+
+  // Xử lý khi bấm nút Đăng ký
+  const handleRegisterClick = () => {
+    setShowQr(true);
+    setRegistered(false);
+  };
+
+  // Xử lý khi người dùng bấm "Đã quét xong"
+  const handleScanComplete = async () => {
+    // Lấy thông tin người dùng hiện tại
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.error('Người dùng chưa đăng nhập.');
+      // Có thể hiển thị thông báo cho người dùng
+      setShowQr(false);
+      setRegistered(false);
+      return;
+    }
+
+    // Dữ liệu cần chèn vào bảng user_courses
+    const enrollmentData = {
+      user_id: user.id,
+      course_id: courseData.id, // Lấy course_id từ dữ liệu khóa học đã fetch
+      enrollment_date: new Date().toISOString(), // Sử dụng thời gian hiện tại client
+      // Hoặc dùng Supabase function để lấy thời gian server:
+      // enrollment_date: supabase.fn.now(),
+      progress: 0,
+      status: 'studying',
+    };
+
+    // Chèn dữ liệu vào bảng user_courses
+    const { error } = await supabase
+      .from('user_courses')
+      .insert([enrollmentData]);
+
+    if (error) {
+      console.error('Lỗi khi đăng ký khóa học:', error);
+      // Xử lý lỗi (ví dụ: hiển thị thông báo lỗi cho người dùng)
+      setRegistered(false); // Đảm bảo trạng thái đăng ký không thành công
+    } else {
+      console.log('Đăng ký khóa học thành công!');
+      // Cập nhật UI sau khi đăng ký thành công
+      setRegistered(true);
+    }
+
+    // Ẩn QR code
+    setShowQr(false);
+  };
 
   return (
     <div>
@@ -85,14 +136,14 @@ const CourseDetail = () => {
         <div>
           <div>Not Found</div>
           {/* Back to courses */}
-            <div className="mt-12">
-              <Link to="/courses" className="inline-flex items-center text-orange-500 hover:text-orange-600 font-medium">
-                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Quay lại trang khóa học
-              </Link>
-            </div>
+          <div className="mt-12">
+            <Link to="/courses" className="inline-flex items-center text-orange-500 hover:text-orange-600 font-medium">
+              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+              </svg>
+              Quay lại trang khóa học
+            </Link>
+          </div>
         </div>
         :
         <div className="space-y-8 bg-gray-50 py-2">
@@ -362,14 +413,43 @@ const CourseDetail = () => {
                     <p className="text-4xl font-bold text-orange-500 mb-1">{courseData.price}</p>
                     <p className="text-gray-500">Học phí trọn khóa</p>
                   </div>
-                  
-                  <button className="w-full bg-orange-500 text-white py-4 rounded-xl font-medium mb-4 hover:bg-orange-600 transition-colors shadow-sm">
+
+                  {/* Nút đăng ký thay đổi thành nút có sự kiện */}
+                  <button
+                    className="w-full bg-orange-500 text-white py-4 rounded-xl font-medium mb-4 hover:bg-orange-600 transition-colors shadow-sm"
+                    onClick={handleRegisterClick}
+                    disabled={showQr} // Disable nút khi đang hiển thị QR để tránh nhấn nhiều lần
+                  >
                     Đăng ký ngay
                   </button>
+
+                  {/* Hiển thị QR code khi showQr = true */}
+                  {showQr && (
+                    <div className="bg-white p-6 rounded-xl shadow-md text-center">
+                      <h3 className="text-lg font-semibold mb-4">Quét QR code để đăng ký khóa học</h3>
+                      <div className="flex justify-center mb-6">
+                        <img src="/images/qr.png" alt="QR Code Đăng ký" className="w-48 h-48" />
+                      </div>
+                      <button
+                        className="bg-green-500 text-white py-2 px-6 rounded hover:bg-green-600 transition-colors"
+                        onClick={handleScanComplete}
+                      >
+                        Đã quét xong
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Hiển thị thông báo khi đăng ký thành công */}
+                  {registered && (
+                    <div className="bg-green-100 text-green-800 p-4 rounded-xl mt-4 text-center font-semibold">
+                      Đăng ký khóa học thành công!
+                    </div>
+                  )}
+
                   <button className="w-full bg-white border-2 border-orange-500 text-orange-500 py-4 rounded-xl font-medium mb-8 hover:bg-orange-50 transition-colors">
                     Thêm vào danh sách quan tâm
                   </button>
-                  
+
                   <div className="space-y-4 mb-8">
                     <div className="flex justify-between items-center py-3 border-b">
                       <span className="text-gray-600">Cấp độ</span>
@@ -392,7 +472,7 @@ const CourseDetail = () => {
                       <span className="font-medium text-gray-800">{courseData.start_date}</span>
                     </div>
                   </div>
-                  
+
                   <div className="bg-orange-50 rounded-xl p-6">
                     <h3 className="font-semibold text-lg mb-4 text-center">Khóa học bao gồm</h3>
                     <ul className="space-y-3">

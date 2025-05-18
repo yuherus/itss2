@@ -164,7 +164,7 @@ const MaterialsPage = () => {
       category: 'vocabulary',
       size: '1.8 MB',
       date: 'Updated 20/02/2025',
-      url: 'https://example-storage.com/files/academic-vocabulary.docx',
+      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
     },
     {
       id: 3,
@@ -175,7 +175,7 @@ const MaterialsPage = () => {
       category: 'listening',
       size: '3.1 MB',
       date: 'Updated 05/01/2025',
-      url: 'https://example-storage.com/files/lecture-strategies.pdf',
+      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
     },
     {
       id: 4,
@@ -186,7 +186,7 @@ const MaterialsPage = () => {
       category: 'speaking',
       size: '5.6 MB',
       date: 'Updated 10/12/2024',
-      url: 'https://example-storage.com/files/presentation-templates.pptx',
+      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
     },
     {
       id: 5,
@@ -197,7 +197,7 @@ const MaterialsPage = () => {
       category: 'research',
       size: '4.2 MB',
       date: 'Updated 25/11/2024',
-      url: 'https://example-storage.com/files/research-methodology.pdf',
+      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
     },
     {
       id: 6,
@@ -208,7 +208,7 @@ const MaterialsPage = () => {
       category: 'reading',
       size: '2.7 MB',
       date: 'Updated 18/10/2024',
-      url: 'https://example-storage.com/files/reading-techniques.pdf',
+      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
     },
     {
       id: 7,
@@ -219,7 +219,7 @@ const MaterialsPage = () => {
       category: 'speaking',
       size: '250 MB',
       date: 'Updated 30/09/2024',
-      url: 'https://example-storage.com/files/discussion-videos.mp4',
+      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
     },
     {
       id: 8,
@@ -230,7 +230,7 @@ const MaterialsPage = () => {
       category: 'writing',
       size: '3.5 MB',
       date: 'Updated 15/08/2024',
-      url: 'https://example-storage.com/files/citation-guide.pdf',
+      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
     },
   ];
 
