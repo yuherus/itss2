@@ -78,7 +78,7 @@ const CourseDetail = () => {
   };
 
   const handleSelectTopic = useCallback((lessonId) => {
-    navigate(`/lession/${lessonId}`);
+    navigate(`/lesson/${lessonId}`);
   }, [navigate]);
 
   // Xử lý khi bấm nút Đăng ký
