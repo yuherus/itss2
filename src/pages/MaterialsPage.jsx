@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 // Component Modal để hiển thị preview
@@ -73,6 +73,11 @@ const PreviewModal = ({ isOpen, onClose, file }) => {
 };
 
 const MaterialCard = ({ material, onPreview }) => {
+  const navigate = useNavigate()
+  const handleClick = useCallback(() => {
+    navigate(`/material/${material.id}`)
+  }, [])
+
   return (
     <div className="overflow-hidden rounded-lg bg-white shadow-md transition-transform hover:scale-105">
       <div className="p-5">
@@ -142,6 +147,7 @@ const MaterialsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [previewFile, setPreviewFile] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [materialsData, setMaterialsData] = useState([])
   const [user, setUser] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -154,97 +160,22 @@ const MaterialsPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
 
-  // Dữ liệu tài liệu mẫu với thêm URLs
-  const materialsData = [
-    {
-      id: 1,
-      title: 'Academic Writing Structure Guide',
-      description:
-        'A comprehensive guide to structuring academic essays, research papers, and dissertations.',
-      type: 'PDF',
-      category: 'writing',
-      size: '2.4 MB',
-      date: 'Updated 15/03/2025',
-      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
-    },
-    {
-      id: 2,
-      title: 'Academic Vocabulary List',
-      description:
-        'Essential vocabulary for academic writing and speaking, with examples in context.',
-      type: 'DOC',
-      category: 'vocabulary',
-      size: '1.8 MB',
-      date: 'Updated 20/02/2025',
-      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
-    },
-    {
-      id: 3,
-      title: 'Lecture Comprehension Strategies',
-      description:
-        'Techniques for effective note-taking and comprehension during academic lectures.',
-      type: 'PDF',
-      category: 'listening',
-      size: '3.1 MB',
-      date: 'Updated 05/01/2025',
-      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
-    },
-    {
-      id: 4,
-      title: 'Academic Presentation Templates',
-      description:
-        'Professional templates for academic presentations with guidance on structure and delivery.',
-      type: 'PPT',
-      category: 'speaking',
-      size: '5.6 MB',
-      date: 'Updated 10/12/2024',
-      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
-    },
-    {
-      id: 5,
-      title: 'Research Methodology Overview',
-      description:
-        'Introduction to common research methodologies used in academic studies.',
-      type: 'PDF',
-      category: 'research',
-      size: '4.2 MB',
-      date: 'Updated 25/11/2024',
-      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
-    },
-    {
-      id: 6,
-      title: 'Academic Reading Techniques',
-      description:
-        'Strategies for efficient reading of academic texts, including skimming, scanning, and critical analysis.',
-      type: 'PDF',
-      category: 'reading',
-      size: '2.7 MB',
-      date: 'Updated 18/10/2024',
-      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
-    },
-    {
-      id: 7,
-      title: 'Academic Discussion Video Series',
-      description:
-        'Video tutorials on participating effectively in academic discussions and seminars.',
-      type: 'VIDEO',
-      category: 'speaking',
-      size: '250 MB',
-      date: 'Updated 30/09/2024',
-      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
-    },
-    {
-      id: 8,
-      title: 'Citation and Referencing Guide',
-      description:
-        'Comprehensive guide to APA, MLA, Chicago, and Harvard referencing styles.',
-      type: 'PDF',
-      category: 'writing',
-      size: '3.5 MB',
-      date: 'Updated 15/08/2024',
-      url: 'https://pdf.bankexamstoday.com/raman_files/Error_Spotting_rules_blogger.pdf',
-    },
-  ];
+  useEffect(() => {
+      const fetchMaterials = async () => {
+        let { data, error } = await supabase
+          .from('files')
+          .select("*")
+
+        if (error) {
+          console.error('Lỗi khi lấy dữ liệu:', error)
+        } else {
+          setMaterialsData(data)
+          console.log(data)
+        }
+      }
+  
+      fetchMaterials()
+    }, [])
 
   // Lọc tài liệu dựa trên category và search query
   const filteredMaterials = materialsData.filter((material) => {
@@ -273,6 +204,11 @@ const MaterialsPage = () => {
     setIsPreviewOpen(true);
   };
 
+  useEffect(() => {
+    console.log(previewFile)
+  }, [previewFile])
+
+  // Xử lý đóng preview
   const handleClosePreview = () => {
     setIsPreviewOpen(false);
   };
