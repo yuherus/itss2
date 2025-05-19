@@ -269,6 +269,21 @@ const MainLayout = () => {
               <span className="ml-3">Dịch học thuật</span>
             </NavLink>
 
+            {/* New Sentence Improvement Link */}
+            <NavLink
+              to="/sentence-improvement"
+              className={({ isActive }) =>
+                `flex items-center rounded-lg p-3 text-sm font-medium ${
+                  isActive
+                    ? 'bg-orange-100 text-orange-500'
+                    : 'text-gray-600 hover:bg-orange-50'
+                }`
+              }
+            >
+              <DictionaryIcon /> {/* Placeholder Icon */}
+              <span className="ml-3">Chỉnh sửa câu</span>
+            </NavLink>
+
             <NavLink
               to="/dictionary"
               className={({ isActive }) =>
