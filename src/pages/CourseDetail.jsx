@@ -75,8 +75,8 @@ const CourseDetail = () => {
     }));
   };
 
-  const handleSelectTopic = useCallback((lessionId) => {
-    navigate(`/lession/${lessionId}`)
+  const handleSelectTopic = useCallback((lessonId) => {
+    navigate(`/lesson/${lessonId}`)
   }, [navigate])
 
   return (
