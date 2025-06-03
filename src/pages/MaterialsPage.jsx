@@ -7,11 +7,11 @@ import { supabase } from '../supabaseClient';
 const PreviewModal = ({ isOpen, onClose, file }) => {
   if (!isOpen) return null;
 
-  const corsProxyUrl = 'https://proxy.corsfix.com/?';
-  const documents = file.url ? [{ uri: corsProxyUrl + file.url, fileName: file.title }] : [];
+  // const corsProxyUrl = 'https://proxy.corsfix.com/?';
+  const documents = file.url ? [{ uri: file.url, fileName: file.title }] : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed left-64 top-0 inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="relative w-full max-w-4xl max-h-screen overflow-hidden bg-white rounded-lg shadow-xl p-1">
         <div className="flex justify-between items-center p-2 border-b">
           <h3 className="text-lg font-semibold">{file.title}</h3>
@@ -299,9 +299,9 @@ const MaterialsPage = () => {
         .from('files')
         .insert({
           user_id: user.id,
-          name: fileMetadata.name || file.name.split('.')[0],
+          title: fileMetadata.name || file.name.split('.')[0],
           category: fileMetadata.category,
-          file_path: publicUrl,
+          url: publicUrl,
           description: fileMetadata.description,
           size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
           pages: parseInt(fileMetadata.pages) || 0,
@@ -344,7 +344,7 @@ const MaterialsPage = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="">
       <div className="rounded-lg bg-white p-6 shadow-md">
         <h1 className="mb-6 text-2xl font-bold">Tài liệu học thuật</h1>
 
@@ -505,7 +505,7 @@ const MaterialsPage = () => {
 
       {/* File Upload Modal */}
       {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed left-64 inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="relative w-full max-w-lg max-h-screen overflow-y-auto bg-white rounded-lg shadow-xl p-6">
             <h3 className="text-lg font-semibold mb-4">Thông tin tài liệu</h3>
             
