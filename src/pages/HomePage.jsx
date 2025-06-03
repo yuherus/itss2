@@ -98,7 +98,7 @@ const HomePage = () => {
         .from('courses')
         .select('*')
         .order('rating', { ascending: false })
-        .limit(5);
+        .limit(4);
 
       if (error) throw error;
 
@@ -206,7 +206,7 @@ const HomePage = () => {
           </div>
           <div className="w-full md:w-1/2">
             <img 
-              src="/images/hero.jpg" 
+              src="/images/How-to-Learn-English-Speaking-at-Home-960x540.jpeg" 
               alt="Student studying" 
               className="h-full w-full object-cover"
             />
@@ -317,7 +317,7 @@ const HomePage = () => {
           <div className="text-center text-red-500 py-8">{error}</div>
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {featuredCourses.map((course) => (
                 <CourseCard key={course.id} course={course} />
               ))}
