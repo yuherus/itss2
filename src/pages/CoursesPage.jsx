@@ -12,14 +12,14 @@ const CourseCard = ({ course }) => {
       <img 
         src={course.image} 
         alt={course.title} 
-        className="h-48 w-full object-cover"
+        className="h-48 w-full object-cover hover:opacity-90 cursor-pointer"
       />
       <div className="p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-500">{course.level}</span>
           <span className="text-sm font-medium text-gray-500">{course.duration}</span>
         </div>
-        <h3 className="mb-2 text-lg font-semibold">{course.title}</h3>
+        <h3 className="mb-2 text-lg font-semibold hover:text-orange-500 cursor-pointer">{course.title}</h3>
         <p className="mb-4 text-sm text-gray-600 line-clamp-2">{course.description}</p>
         
         <div className="flex items-center justify-between">

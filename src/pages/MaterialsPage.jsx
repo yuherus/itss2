@@ -132,9 +132,12 @@ const MaterialCard = ({ material, onPreview }) => {
             >
               Xem trước
             </button>
-            <button className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-500 hover:bg-orange-200">
+            <a
+              href={material.url}
+              download={material.title} 
+              className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-500 hover:bg-orange-200">
               Tải xuống
-            </button>
+            </a>
           </div>
         </div>
       </div>
